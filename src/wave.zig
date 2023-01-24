@@ -43,7 +43,7 @@ pub fn Wav(comptime Reader: type, comptime SeekableStream: type) type {
         /// writes out all the PCM content to the desired `Writer`.
         /// `writer` supplied to this function must satisfy the requirements of `std.io.Writer`.
         pub fn writeAllPcm(self: Self, writer: anytype) !void {
-            try self.seekable.seekTo(self.start_position);
+            try self.seek(0);
 
             var buf: [BUFFER_SIZE]u8 = undefined;
             var i: u32 = 0;
@@ -64,6 +64,11 @@ pub fn Wav(comptime Reader: type, comptime SeekableStream: type) type {
             }
         }
 
+        pub fn seek(self: Self, seconds: u32) !void {
+            const single_sample_size = self.sample_rate * 2 * (self.bits_per_sample / 8);
+            try self.seekable.seekTo(seconds * single_sample_size + self.start_position);
+        }
+
         /// writes out the PCM content starting from `start` to `start` + `length`.
         /// `writer` supplied to this function must satisfy the requirements of `std.io.Writer`.
         pub fn writeSegment(self: Self, writer: anytype, start: u32, length: u32) !void {
@@ -71,7 +76,7 @@ pub fn Wav(comptime Reader: type, comptime SeekableStream: type) type {
                 return error.Unseekable;
 
             const single_sample_size = self.sample_rate * 2 * (self.bits_per_sample / 8);
-            try self.seekable.seekTo(start * single_sample_size + self.start_position);
+            try self.seek(start);
 
             var buf: [BUFFER_SIZE]u8 = undefined;
             var i: u32 = 0;
