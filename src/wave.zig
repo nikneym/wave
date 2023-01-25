@@ -65,6 +65,9 @@ pub fn Wav(comptime Reader: type, comptime SeekableStream: type) type {
         }
 
         pub fn seek(self: Self, seconds: u32) !void {
+            if (seconds > self.duration_in_seconds)
+                return error.Unseekable;
+
             const single_sample_size = self.sample_rate * 2 * (self.bits_per_sample / 8);
             try self.seekable.seekTo(seconds * single_sample_size + self.start_position);
         }
